@@ -9,11 +9,11 @@ seqList1=extractSeq("10k_reads.fastq", "fastq")
 
 def doubling(s):
     n = len(s) #n:The length of the string we are processing.
-    sa = []    # sa[i]:Where is the ith suffix in the original string?
+    sa = []    # sa[i]:Where is the ith suffix in the original string? (For it is not arranged.)
     rk = []    # rk[i]:What is the rank of original string's suffix(which starts from index "i") in array "sa"?
                 #rk will not be used in this project.
-    for i in range(n):#Initialize the sa and rk of the string.
-        rk.append(ord(s[i])-ord('a')) #Every suffix is ranked according to its initial letter.
+    for i in range(n):#Initialize the sa and rk array of the string.
+        rk.append(ord(s[i])-ord('a')) #At the beginning, every suffix is ranked according to its initial letter.
         sa.append(i) #While the ith suffix is the suffix strat from the position where index=i
 
     l = 0 # l is the length that already sorted. Then sort in length 2l.
@@ -28,21 +28,19 @@ def doubling(s):
         for i in range(n):
             if sa[i]>=l:
                 p.append(sa[i]-l)
-        # 然后开始基数排序，先对第一关键字进行统计
         #Randix sort.
-        # 先统计每个值都有多少
-        #First count the number of every value.
+        #First count the number of every key word.
         cnt = [0]*sig
         for i in range(n):
             cnt[rk[i]] += 1
-        # 做个前缀和，方便基数排序
+        #Prefix sum for query. There is defination of prefix sum on wikipedia.
         for i in range(1,sig):
             cnt[i] += cnt[i-1]
-        # 然后利用基数排序计算新sa #Use Randix sort to calculate new sa.
+        #Use Randix sort to calculate new sa.
         for i in range(n-1,-1,-1):
             cnt[rk[p[i]]] -= 1
             sa[cnt[rk[p[i]]]] = p[i]
-        # 然后利用新sa计算新rk Then use new sa to calculate new rk
+        #Then use new sa to calculate new rk
         def equal(i,j,l):
             if rk[i]!=rk[j]:return False
             if i+l>=n and j+n>=n:
@@ -53,7 +51,7 @@ def doubling(s):
         sig = -1
         tmp = [None]*n
         for i in range(n):
-            # 直接通过判断第一关键字的排名和第二关键字的排名来确定它们的前2l个字符是否相同
+            #To judge whether their beginning 2l letters are similar by comparing the rank of first and second key word.
             if i==0 or not equal(sa[i],sa[i-1],l):
                 sig += 1
             tmp[sa[i]] = sig
@@ -61,7 +59,7 @@ def doubling(s):
         sig += 1
         if sig==n:
             break
-        # 更新有效长度 #Update the step length
+        #Update the step length
         l = l << 1 if l > 0 else 1
     # Finally calculate the height array.
     k = 0
@@ -72,16 +70,13 @@ def doubling(s):
             while i+k<n and j+k<n and s[i+k]==s[j+k]:
                 k += 1
             height [rk[i]] = k
-            k = max(0,k-1) # 下一个height的值至少从max(0,k-1)开始
+            k = max(0,k-1)
     return sa,rk,height
 
-
-#假设字符串A的开头是核苷酸C
-#去另一个字符串（B）里面找所有C开头的后缀
-#记录下当前最长匹配长度和相应的字串索引（是这个文件里的哪个字串）
-
-
-
+#Mapping algorithm.
+#We select a current read A, and get its suffix array:sa, rank, height
+#If in read B, the prefix is AGCT, then look up in A's suffixs, if there exists some suffixs that start with AGCT, then compare following letters in B's prefix and A's suffix.
+#If the A's suffix exactly matches B's prefix, then we align those two reads to a longer sequence.
 def saContain(strA,sa,strB,k,height):#Find if the prefix of second string is the suffix of the first string
     left=0
     right=len(sa)-1
